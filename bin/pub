@@ -1,0 +1,143 @@
+#!/usr/bin/env python
+
+# TODO: https://www.python.org/dev/peps/pep-0302/
+# TODO: Single symlink deref. If can't find the address in the path, then
+# perhaps it'll dereference to a path that has an address
+
+import argparse
+import collections
+import ConfigParser
+import io
+import logging
+import os.path
+import re
+import sys
+
+import pybitcointools
+import pygit2
+
+log = logging.root
+
+
+HISTORY_FILE = '.history'
+HISTORY_TEMPLATE = """
+[DEFAULT]
+signature =
+"""
+BRANCH_PREFIX = 'verne-pub/'
+ERR_INVALID_FOLDER = ("Cannot publish %s. "
+                      "Path must point to a folder with name {name}-{pubhash}, "
+                      "where {pubhash} is a valid Satoshi address (type 1) "
+                      "which you have the private key for.")
+ERR_UNSTAGED = "Cannot publish %s. Folder has unstaged changes."
+RE_FOLDER = re.compile('^.*-[1][a-km-zA-HJ-NP-Z0-9]{26,33}$')
+GIT_UNSTAGED_STATII = (128, 256, 512)
+
+
+
+def main():
+    args = parser.parse_args()
+    path = os.path.relpath(args.path)
+
+    # Init repo
+    repodir = pygit2.discover_repository('.')
+    repo = pygit2.Repository(repodir)
+
+    # Get pubkey hash
+    name = args.path.rstrip().rstrip('/').rsplit('/', 1)[-1]
+    addr = name.rsplit('-', 1)[-1]
+    if not (os.path.isdir(args.path) and RE_FOLDER.match(name)):
+        raise ValueError(ERR_INVALID_FOLDER % name)
+    log.info("Folder to publish: %s", path)
+
+    # Check folder revision status
+    for (p, st) in repo.status().items():
+        if p.startswith(path) and st in GIT_UNSTAGED_STATII:
+            raise ValueError(ERR_UNSTAGED % path)
+
+    # Get tree reference with empty enclosure
+    oid = repo.index.write_tree()
+    entry = bottom_entry = repo.get(oid)[path]
+    for component in reversed(path.split('/')):
+        builder = repo.TreeBuilder()
+        builder.insert(component, entry.oid, pygit2.GIT_FILEMODE_TREE)
+        entry = repo.get(builder.write())
+    top_tree = repo.get(entry.oid)
+
+    # Get the branch
+    branch_name = BRANCH_PREFIX + name
+    branch = repo.lookup_branch(branch_name)
+
+    # Validate branch:
+    bottom_tree = repo.get(bottom_entry.oid)
+    if HISTORY_FILE in bottom_tree:
+        # Remove the history file from the tree to verify.
+        history_blob = repo.get(bottom_tree[HISTORY_FILE])
+        raise NotImplemented()
+        import pdb; pdb.set_trace()
+    else:
+        history = ConfigParser.SafeConfigParser(dict_type=collections.OrderedDict,
+                                                allow_no_value=False)
+        history.readfp(io.BytesIO(HISTORY_TEMPLATE))
+
+    # Get PK from user
+    while True:
+        privkey = raw_input("Please enter the private key for %s: " % addr)
+        if addr == pybitcointools.privkey_to_address(privkey.strip()):
+            break
+        else:
+            print "Private key incorrect"
+
+    # Sign history
+    msg = repr((top_tree.oid, history.get('DEFAULT', 'signature')))
+    signature = pybitcointools.ecdsa_sign(msg, privkey)
+    history.set('DEFAULT', 'signature', signature)
+
+    # Get tree with new history
+    buf = io.BytesIO()
+    history.write(buf)
+    buf.seek(0)
+    history_data = buf.read()
+    history_oid = repo.create_blob(history_data)
+    builder = repo.TreeBuilder(bottom_tree)
+    builder.insert(HISTORY_FILE, history_oid, pygit2.GIT_FILEMODE_BLOB)
+    entry = repo.get(builder.write())
+    for component in reversed(path.split('/')):
+        builder = repo.TreeBuilder()
+        builder.insert(component, entry.oid, pygit2.GIT_FILEMODE_TREE)
+        entry = repo.get(builder.write())
+    tree_signed = repo.get(entry.oid)
+
+    # Commit new history
+    author = pygit2.Signature(addr, addr + '@authors.tld')
+    committer = pygit2.Signature(sys.argv[0] + '@', 'vdsm@verne.io')
+
+    branch = repo.lookup_branch(branch_name)
+    ref_name = branch.name if branch else None
+
+    parents = []
+    if branch:
+        parents = [branch.peel().oid]
+
+    commit_oid = repo.create_commit(ref_name, author, committer, '',
+                                    tree_signed.oid, parents)
+    commit = repo.get(commit_oid)
+
+    if not branch:
+        branch = repo.create_branch(branch_name, commit)
+
+    # Check folder
+    # Ensure that history file is either nonpresent or correct
+    # Ensure there are some staged changes within the folder
+    # Ensure there are no staged changes outside of the folder
+    # Commit folder to a branch.
+
+
+parser = argparse.ArgumentParser(description='Verne Publish')
+parser.add_argument('-k', '--keyfile', default='~/.vmoney')
+parser.add_argument('path')
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    main()
