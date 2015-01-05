@@ -1,7 +1,7 @@
 Verne
 =====
 
-Reimaging the blogo-blag.
+Rebloggening the inter-chat.
 
 Install
 -------
