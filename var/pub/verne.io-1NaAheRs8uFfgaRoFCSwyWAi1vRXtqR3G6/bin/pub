@@ -61,10 +61,13 @@ def main():
 
     # Get PK
     privkey = os.environ.get('VERNE_PRIVKEY', '').strip()
+    if privkey:
+        if addr != pybitcointools.privkey_to_address(privkey.strip()):
+            raise ValueError("Private key incorrect; cannot continue")
     while not privkey:
         privkey = raw_input("Please enter the private key for %s: " % addr)
         if addr != pybitcointools.privkey_to_address(privkey.strip()):
-            print "Private key incorrect"
+            log.error("Private key incorrect")
             continue
 
     # Validate
