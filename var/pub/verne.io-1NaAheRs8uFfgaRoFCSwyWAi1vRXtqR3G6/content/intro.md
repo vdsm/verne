@@ -1,11 +1,12 @@
-Verne
-=====
+Title: Status Quorum
+Slug: status-quorum
+Authors: Scott Sadler
+Date: 2014-12-14 20:11
 
-An experiment in Social Computing
+Verne - An experiment in Social Computing
 
-
-Status Quorum
--------------
+Introduction
+------------
 
 A semaphore is a signalling system that allows coordinating participants safe passage by following some simple rules. Indeed, in some languages the word "semaphore" is used to refer to traffic lights. Another example of a semaphore would be an air traffic control system. These systems provide signals that navigators can use to avoid bumping into one another. The consequences of ignoring them are dire; things are lost, and these things that are lost are often very valuable.
 
@@ -37,7 +38,7 @@ The DVCS is designed not to make destructive changes. It's default behaviour is 
 Versioning Distributed State Machine
 ------------------------------------
 
-This paper proposes the "versioning distributed state machine" (VDSM) as a new class of event driven distributed application based on distributed version control. A VDSM is a kind of networked application which can exist in many different states at the same time. It does not have a typical lifecycle; it is not dependent on a host computer to run it to completion. It uses a DVCS repository to track changes to it's working state, which means that it's execution can be performed in stages over many different machines. 
+This paper proposes the "versioning distributed state machine" (VDSM) as a new class of event driven distributed application based on distributed version control. A VDSM is a kind of networked application which can exist in many different states at the same time. It does not have a typical lifecycle; it is not dependent on a host computer to run it to completion. It uses a DVCS repository to track changes to it's working state, which means that it's execution can be performed in stages over many different machines.
 
 A process implemented as a VDSM cannot break in the way that traditional computer processes can break, since in the event that an erroneous circumstance is detected, the culprit branch can be discarded and a new, fixed branch curated in it's place. This undo mechanism gives it the property of being more or less foolproof, by constraining the amount of value that can be lost in the event of a problem.
 
