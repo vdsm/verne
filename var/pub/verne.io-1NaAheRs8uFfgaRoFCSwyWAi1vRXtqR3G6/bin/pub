@@ -22,14 +22,13 @@ log = logging.root
 
 
 SIG_FILE = '.sig'
-BRANCH_PREFIX = 'verne-pub/'
 ERR_INVALID_FOLDER = ("Cannot publish %s. "
                       "Path must point to a folder with name {name}-{pubhash}, "
                       "where {pubhash} is a valid Satoshi address (type 1) "
                       "which you have the private key for.")
-ERR_UNSTAGED = "Cannot publish %s. Folder has unstaged changes."
+ERR_UNCOMMITTED = "Cannot publish %s. Folder has uncommitted changes."
 RE_FOLDER = re.compile('^.*-[1][a-km-zA-HJ-NP-Z0-9]{26,33}$')
-GIT_UNSTAGED_STATII = (128, 256, 512)
+BRANCH_PREFIX = '/verne/pub/'
 
 
 
@@ -50,10 +49,10 @@ def main():
         raise ValueError(ERR_INVALID_FOLDER % name)
     log.info("Folder to publish: %s", path)
 
-    # Make sure user has no unstaged changes in the path
-    for (p, st) in repo.status().items():
-        if p.startswith(path) and st in GIT_UNSTAGED_STATII:
-            raise ValueError(ERR_UNSTAGED % path)
+    # Make sure user has no uncommitted changes in the path
+    for (p, _) in repo.status().items():
+        if p.startswith(path)
+            raise ValueError(ERR_UNCOMMITTED % path)
 
     # Get the branch
     branch_name = BRANCH_PREFIX + name
@@ -83,11 +82,8 @@ def main():
 
     # Extract the desired subtree from the user's working copy
     oid = repo.index.write_tree()
-    entry = bottom_entry = repo.get(oid)[path]
-    for component in reversed(path.split('/')):
-        builder = repo.TreeBuilder()
-        builder.insert(component, entry.oid, pygit2.GIT_FILEMODE_TREE)
-        entry = repo.get(builder.write())
+    entry = repo.get(oid)[path]
+    entry = wrap_tree(repo, path, entry)
     tree = repo.get(entry.oid)
 
     # Make sure that the branch has actually changed
@@ -97,6 +93,11 @@ def main():
 
     # Sign tree
     tree_signed = sign_tree(repo, privkey, path, tree)
+
+    # Copy sig back to user's repo
+    subtree = repo.get(tree[path])
+    builder = repo.TreeBuilder(subtree)
+    
 
     # Commit new history
     author = pygit2.Signature(addr, addr + '@authors.tld')
