@@ -92,6 +92,7 @@ def main():
     tree = tree[path].wrap(path)
 
     # Make sure that the branch has actually changed
+    import pdb; pdb.set_trace()
     if branch.exists and branch.head.tree == tree:
         log.info("Branch is up to date")
         return
