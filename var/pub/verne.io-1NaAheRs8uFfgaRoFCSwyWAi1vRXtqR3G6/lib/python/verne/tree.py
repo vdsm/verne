@@ -51,7 +51,6 @@ class Tree(object):
             raise NotABlob(path)
             
     def set(self, path, data):
-        import pdb; pdb.set_trace()
         parts = path.split('/')
         basename = parts.pop()
 
@@ -130,15 +129,11 @@ class Branch(object):
     @property
     def head(self):
         ref = self.repo.lookup_branch(self.ref_name)
-        return ref.get_object()
-    
-    @property
-    def tree(self):
-        return Tree(self.repo, self.head.tree)
+        return Commit(self.repo, ref.get_object())
 
     def commit(self, msg, tree):
         ref_to_update = self.ref_name if self.exists else None
-        parents = [self.head] if self.exists else []
+        parents = [self.head._commit.oid] if self.exists else []
         author = pygit2.Signature('Alice Author', 'alice@authors.tld')
         committer = pygit2.Signature('Cecil Committer', 'cecil@committers.tld')
         oid = self.repo.create_commit( ref_to_update
@@ -161,4 +156,8 @@ class Commit(object):
     
     @property
     def tree(self):
-        return Tree(self.repo, self._commit)
+        return Tree(self.repo, self._commit.tree)
+
+    @property
+    def parents(self):
+        return (Commit(self.repo, c) for c in self._commit.parents)
