@@ -53,3 +53,5 @@ docs/_build/
 target/
 
 *.swp
+*.swo
+*.fuse_hidden*

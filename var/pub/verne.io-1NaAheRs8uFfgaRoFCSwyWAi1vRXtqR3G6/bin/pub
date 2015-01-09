@@ -18,6 +18,8 @@ import sys
 import pybitcointools
 import pygit2
 
+from verne.tree import Tree, Branch
+
 log = logging.root
 
 
@@ -28,7 +30,7 @@ ERR_INVALID_FOLDER = ("Cannot publish %s. "
                       "which you have the private key for.")
 ERR_UNCOMMITTED = "Cannot publish %s. Folder has uncommitted changes."
 RE_FOLDER = re.compile('^.*-[1][a-km-zA-HJ-NP-Z0-9]{26,33}$')
-BRANCH_PREFIX = '/verne/pub/'
+BRANCH_PREFIX = 'out/pub/'
 
 
 
@@ -50,24 +52,30 @@ def main():
     log.info("Folder to publish: %s", path)
 
     # Make sure user has no uncommitted changes in the path
-    for (p, _) in repo.status().items():
-        if p.startswith(path)
-            raise ValueError(ERR_UNCOMMITTED % path)
-
-    # Get the branch
-    branch_name = BRANCH_PREFIX + name
-    branch = repo.lookup_branch(branch_name)
+    for (p, st) in repo.status().items():
+        if p.startswith(path):
+            if st not in (pygit2.GIT_STATUS_IGNORED,):
+                print p
+                for k in dir(pygit2):
+                    if getattr(pygit2, k) == st:
+                        print k
+                raise ValueError(ERR_UNCOMMITTED % path)
 
     # Get PK
     privkey = os.environ.get('VERNE_PRIVKEY', '').strip()
     if privkey:
-        if addr != pybitcointools.privkey_to_address(privkey.strip()):
+        if addr != pybitcointools.privkey_to_address(privkey):
             raise ValueError("Private key incorrect; cannot continue")
     while not privkey:
         privkey = raw_input("Please enter the private key for %s: " % addr)
-        if addr != pybitcointools.privkey_to_address(privkey.strip()):
+        if addr != pybitcointools.privkey_to_address(privkey):
             log.error("Private key incorrect")
             continue
+
+    # Get the branch
+    print repo.head.name
+    branch_name = BRANCH_PREFIX + name
+    branch = Branch(repo, branch_name)
 
     # Validate
     sig_path = os.path.join(path, SIG_FILE)
@@ -79,98 +87,56 @@ def main():
         else:
             raise
 
-
     # Extract the desired subtree from the user's working copy
-    oid = repo.index.write_tree()
-    entry = repo.get(oid)[path]
-    entry = wrap_tree(repo, path, entry)
-    tree = repo.get(entry.oid)
+    tree = Tree(repo, repo.index.write_tree())
+    tree = tree[path].wrap(path)
 
     # Make sure that the branch has actually changed
-    if branch and branch.get_object().tree.hex == tree.hex:
+    if branch.exists and branch.head.tree == tree:
         log.info("Branch is up to date")
         return
 
-    # Sign tree
+    # Sign tree and commit
     tree_signed = sign_tree(repo, privkey, path, tree)
-
-    # Copy sig back to user's repo
-    subtree = repo.get(tree[path])
-    builder = repo.TreeBuilder(subtree)
-    
-
-    # Commit new history
-    author = pygit2.Signature(addr, addr + '@authors.tld')
-    committer = pygit2.Signature(sys.argv[0] + '@', 'vdsm@verne.io')
-
-    branch = repo.lookup_branch(branch_name)
-    ref_name = branch.name if branch else None
-
-    parents = []
-    if branch:
-        parents = [branch.get_object().oid]
-
-    commit_oid = repo.create_commit(ref_name, author, committer, '',
-                                    tree_signed.oid, parents)
-    commit = repo.get(commit_oid)
-
-    if not branch:
-        branch = repo.create_branch(branch_name, commit)
-
+    commit = branch.commit("Sign " + path, tree_signed)
+    # repo.index.merge(commit.id)
 
 
 def sign_tree(repo, privkey, subpath, tree):
     signature = pybitcointools.ecdsa_sign(tree.oid.hex, privkey)
-    sig_oid = repo.create_blob(signature)
-    subtree = repo.get(tree[subpath].oid)  # TODO: Validate entry type
-    builder = repo.TreeBuilder(subtree)
-    builder.insert(SIG_FILE, sig_oid, pygit2.GIT_FILEMODE_BLOB)
-    entry = repo.get(builder.write())
-    entry = wrap_tree(repo, subpath, entry)
-    return repo.get(entry.oid)
-
-
-def wrap_tree(repo, subpath, thing):
-    for component in reversed(subpath.split('/')):
-        builder = repo.TreeBuilder()
-        builder.insert(component, thing.oid, pygit2.GIT_FILEMODE_TREE)
-        thing = repo.get(builder.write())
-    return thing
+    return tree.set(subpath + '/' + SIG_FILE, signature)
 
 
 def check_signed_branch(repo, sig_path, privkey, branch):
-    iter_revs = revisions(branch.get_object(), sig_path)
+    if not branch.exists:
+        return
+    iter_revs = revisions(branch.head, sig_path)
     revs = list(itertools.islice(iter_revs, 2))
-    tree = branch.get_object().tree
     if len(revs) == 0:
         raise NotSigned("Unsigned modifications found in %s" % branch.name)
     subpath = os.path.dirname(sig_path)
-    subtree = repo.get(tree[subpath].oid)
-    builder = repo.TreeBuilder(subtree)
-    builder.remove(SIG_FILE)
+    tree = branch.head.tree.delete(sig_path)
+    # To validate, we need to sign the tree with the previous signature.
     if len(revs) == 2:
-        # Insert old sigfile
-        blob_id = repo.get(revs[1].oid).oid
-        builder.insert(SIG_FILE, blob_id, pygit2.GIT_FILEMODE_BLOB)
-    subtree = repo.get(builder.write())
-    signed_tree = wrap_tree(repo, subpath, subtree)
+        tree = tree.insert(sig_path, revs[1])
+    signed_tree = tree[subpath].wrap(subpath)
     signature = pybitcointools.ecdsa_sign(signed_tree.hex, privkey)
-    if signature != repo.get(revs[0].oid).data:
+    if signature != revs[0]:
         raise NotSigned("Bad signature. Expecting %s, got %s" %
-            (repo.get(revs[0].oid).data, signature))
+            (revs[0], signature))
 
 
 
-def revisions(commit, file, last=None):
+def revisions(commit, path, last=None):
     try:
-        entry = commit.tree[file]
+        entry = commit.tree[path]
     except KeyError:
         return
     if entry != last:
         yield entry
         last = entry
     for parent in commit.parents:
-        for rev in revisions(parent, file, last):
+        for rev in revisions(parent, path, last):
             yield rev
 
 
