@@ -94,12 +94,12 @@ def main():
     # Make sure that the branch has actually changed
     if branch.exists and branch.head.tree == tree:
         log.info("Branch is up to date")
-        print "hi"
         return
 
     # Sign tree and commit
     tree_signed = sign_tree(repo, privkey, path, tree)
     commit = branch.commit("Sign " + path, tree_signed)
+    log.info("Wrote to branch %s" % branch_name)
     # repo.index.merge(commit.id)
 
 
