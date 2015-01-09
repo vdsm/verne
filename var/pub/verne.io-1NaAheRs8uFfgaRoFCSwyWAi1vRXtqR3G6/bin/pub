@@ -99,7 +99,7 @@ def main():
     # Sign tree and commit
     tree_signed = sign_tree(repo, privkey, path, tree)
     commit = branch.commit("Sign " + path, tree_signed)
-    log.info("Wrote to branch %s" % branch_name)
+    log.info("Wrote to branch %s, commit id %s" % (branch_name, commit.oid.hex))
     # repo.index.merge(commit.id)
 
 
