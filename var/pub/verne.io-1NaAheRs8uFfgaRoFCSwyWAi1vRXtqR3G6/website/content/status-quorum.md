@@ -3,7 +3,7 @@ Slug: status-quorum
 Authors: Scott Sadler
 Date: 2014-12-14 20:11
 
-Verne - An experiment in Social Computing
+Verne - An Experiment in Social Computing
 
 Introduction
 ------------
@@ -32,17 +32,17 @@ However, there is a class of collaborative computing which is designed to accomo
 
 Development can be seen as an iterative process where the inputs are requirements, the outputs are code, and the algorithm is a combined effort between a machine and a user. A typical pattern is a developer who changes the code, then executes the program to see if it gives the desired behaviour. If the developer is happy with their code, they may commit it to a branch.
 
-The DVCS is designed not to make destructive changes. It's default behaviour is to append. Unless instructed otherwise by the user, no destructive changes are made, and even when a state needs to be reverted a DVCS may add a negation to a change rather than deleting it. The history that is formed is a timeline of events. In the typical case, the events are points in time which the developer wanted to record something. This policy of non destruction and recording change events in sequence allows for 2 working states of the development process to be merged together.
+The DVCS is designed not to make destructive changes. Its default behaviour is to append. Unless instructed otherwise by the user, no destructive changes are made, and even when a state needs to be reverted a DVCS may add a negation to a change rather than deleting it. The history that is formed is a timeline of events. In the typical case, the events are points in time which the developer wanted to record something. This policy of non destruction and recording change events in sequence allows for 2 working states of the development process to be merged together.
 
 
 Versioning Distributed State Machine
 ------------------------------------
 
-This paper proposes the "versioning distributed state machine" (VDSM) as a new class of event driven distributed application based on distributed version control. A VDSM is a kind of networked application which can exist in many different states at the same time. It does not have a typical lifecycle; it is not dependent on a host computer to run it to completion. It uses a DVCS repository to track changes to it's working state, which means that it's execution can be performed in stages over many different machines.
+This paper proposes the "versioning distributed state machine" (VDSM) as a new class of event driven distributed application based on distributed version control. A VDSM is a kind of networked application which can exist in many different states at the same time. It does not have a typical lifecycle; it is not dependent on a host computer to run it to completion. It uses a DVCS repository to track changes to its working state, which means that its execution can be performed in stages over many different machines.
 
-A process implemented as a VDSM cannot break in the way that traditional computer processes can break, since in the event that an erroneous circumstance is detected, the culprit branch can be discarded and a new, fixed branch curated in it's place. This undo mechanism gives it the property of being more or less foolproof, by constraining the amount of value that can be lost in the event of a problem.
+A process implemented as a VDSM cannot break in the way that traditional computer processes can break, since in the event that an erroneous circumstance is detected, the culprit branch can be discarded and a new, fixed branch curated in its place. This undo mechanism gives it the property of being more or less foolproof, by constraining the amount of value that can be lost in the event of a problem.
 
-As well as the application state, a VDSM may contain it's own code. It is advantageous to host code with data because then we can treat code as a first class input to an event driven system, in the case that a data output depends on the version of a code function. We also reap the benefit that the development and execution lifecycles are unified, which would otherwise incur additional deployment requirements and inhibit it's ability to propagate through the network.
+As well as the application state, a VDSM may contain its own code. It is advantageous to host code with data because then we can treat code as a first class input to an event driven system, in the case that a data output depends on the version of a code function. We also reap the benefit that the development and execution lifecycles are unified, which would otherwise incur additional deployment requirements and inhibit its ability to propagate through the network.
 
 The lack of a hard requirement for consistency, plus the non destructive style of adding values, also makes programming a VDSM much easier than programming consistent distributed systems, since the task of merging of the data is generalised by the version control system, and maintaining consistency is the job of the user.
 
@@ -56,7 +56,7 @@ Lets take an example of a social app and explore it in detail: A game of Chess. 
 
 It is possible to play a game of chess to completion, using a VDSM as a medium for propagation of game state but encoding everything by hand, ie, with no game logic implemented whatsoever. But, there are benefits to implementing the game logic and verifying the moves made by players, namely, to present a nice interface, to save the players inconvenience from minor errors, and to prevent propagation of invalid game states around the network.
 
-The game state consists of a "move file" to which moves are written, and a file for each piece on the board, where the filename is it's offset on the board (D2 etc), and the file contents are the color and type of the piece.
+The game state consists of a "move file" to which moves are written, and a file for each piece on the board, where the filename is its offset on the board (D2 etc), and the file contents are the color and type of the piece.
 
 Player A informs the app of their move, and the app encodes that move to the repository. The move file is updated with the parameters of the move, signed by the user, and the state of the board is reflected in the piece files. These changes are committed and synchronised to player B.
 
