@@ -73,7 +73,6 @@ def main():
             continue
 
     # Get the branch
-    print repo.head.name
     branch_name = BRANCH_PREFIX + name
     branch = Branch(repo, branch_name)
 
