@@ -104,6 +104,10 @@ def main():
     assert branch.exists, "cannot sign empty branch"
     commit = branch.commit("Sign " + path, signed_tree)
     log.info("Wrote to %s, commit id %s" % (branch.name, commit.oid.hex))
+    # Ugly ass workaround to update the repo with the change.
+    open(sigpath, 'w').write(signed_tree[sigpath])
+    os.system('git reset HEAD ' + sigpath)
+
 
 
 def sign_tree(repo, privkey, subpath, tree):
