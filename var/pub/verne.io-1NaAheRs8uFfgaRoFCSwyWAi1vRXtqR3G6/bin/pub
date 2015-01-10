@@ -72,26 +72,27 @@ def main():
             log.error("Private key incorrect")
             continue
 
-    # Get the branch
-    branch_name = BRANCH_PREFIX + name
-    branch = Branch(repo, branch_name)
-
     # Validate
-    sig_path = os.path.join(path, SIG_FILE)
-    try:
-        check_signed_branch(repo, sig_path, privkey, branch)
-    except NotSigned as e:
-        if args.force:
-            print "Overriding unsigned branch due to --force"
-        else:
-            raise
+    # sig_path = os.path.join(path, SIG_FILE)
+    # try:
+    #     check_signed_branch(repo, sig_path, privkey, branch)
+    # except NotSigned as e:
+    #     if args.force:
+    #         print "Overriding unsigned branch due to --force"
+    #     else:
+    #         raise
+    
+    # Need to know if there are any unsigned changes.
+    # For now we will work on the principle that all
+    # data in our working branch is kosher, since we
+    # validate everything on merging.
+    import pdb; pdb.set_trace()
 
     # Extract the desired subtree from the user's working copy
     tree = Tree(repo, repo.index.write_tree())
     tree = tree[path].wrap(path)
 
     # Make sure that the branch has actually changed
-    import pdb; pdb.set_trace()
     if branch.exists and branch.head.tree == tree:
         log.info("Branch is up to date")
         return
