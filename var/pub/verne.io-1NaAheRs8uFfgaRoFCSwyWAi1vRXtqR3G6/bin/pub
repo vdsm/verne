@@ -87,7 +87,7 @@ def main():
                 continue
             # Now we want to know if we sign this tree do we get the head tree
             signed_tree = sign_tree(repo, privkey, path, last_tree)
-            signed = signed_tree = head_tree
+            signed = signed_tree == head_tree
             break
 
     if signed:
