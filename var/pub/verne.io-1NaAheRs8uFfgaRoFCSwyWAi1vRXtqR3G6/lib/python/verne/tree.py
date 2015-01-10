@@ -119,7 +119,6 @@ class Tree(object):
 
 class Branch(object):
     def __init__(self, repo, branch_name):
-        import pdb; pdb.set_trace()
         if branch_name.startswith('refs/heads/'):
             self.ref_name = branch_name[11:]
         else:
