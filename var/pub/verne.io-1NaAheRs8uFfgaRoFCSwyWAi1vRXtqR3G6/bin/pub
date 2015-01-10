@@ -73,17 +73,21 @@ def main():
             continue
 
     signed = False
-    head_tree = None
     sigpath = os.path.join(path, SIGFILE)
     for loc, commit in Commit(repo, repo.head.get_object()).recurse():
         if loc == ():
             head_tree = commit.tree.pick(path)
-        elif loc == (0,):
+            head_sig = head_tree.get_blob(sigpath)
+            if not head_sig:
+                log.info("No .sig file found")
+                break
+        else:
             last_tree = commit.tree.pick(path)
-            oldsig = last_tree.get_blob(sigpath, default=None)
-            t = head_tree.insert(sigpath, oldsig)
-            sig = pybitcointools.ecdsa_sign(t.hex, privkey)
-            signed = sig == head_tree.get_blob(sigpath)
+            if last_tree == head_tree:
+                continue
+            # Now we want to know if we sign this tree do we get the head tree
+            signed_tree = sign_tree(repo, privkey, path, last_tree)
+            signed = signed_tree = head_tree
             break
 
     if signed:
@@ -95,7 +99,6 @@ def main():
     signed_tree = sign_tree(repo, privkey, path, tree)
     branch = Branch(repo, repo.head.name)
     assert branch.exists, "cannot sign empty branch"
-    import pdb; pdb.set_trace()
     commit = branch.commit("Sign " + path, signed_tree)
     log.info("Wrote to %s, commit id %s" % (branch.name, commit.oid.hex))
 
