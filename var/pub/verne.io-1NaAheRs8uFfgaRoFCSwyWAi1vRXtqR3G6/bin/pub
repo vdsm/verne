@@ -74,7 +74,7 @@ def main():
 
     signed = False
     head_tree = None
-    sigpath = os.path.join(path, SIGPATH)
+    sigpath = os.path.join(path, SIGFILE)
     for loc, commit in Commit(repo, repo.head.get_object()).recurse():
         if loc == ():
             head_tree = commit.tree
