@@ -90,6 +90,10 @@ class Tree(object):
         if parts:
             return tree.wrap(parts.pop())
         return tree
+
+    def pick(self, path):
+        """ Remove subtrees other than path given """
+        return self.get_subtree(path).wrap(path)
     
     @property
     def hex(self):
@@ -122,6 +126,7 @@ class Branch(object):
         if name.startswith('refs/heads/'):
             name = name[11:]
         self.name = name
+        self.ref_name = 'refs/heads/' + name
         self.repo = repo
     
     @property
@@ -134,11 +139,11 @@ class Branch(object):
         return Commit(self.repo, ref.get_object())
 
     def commit(self, msg, tree):
-        ref_to_update = self.name if self.exists else None
+        ref_to_update = self.ref_name if self.exists else None
         parents = [self.head._commit.oid] if self.exists else []
         author = pygit2.Signature('Alice Author', 'alice@authors.tld')
         committer = pygit2.Signature('Cecil Committer', 'cecil@committers.tld')
-        oid = self.repo.create_commit( ref_to_update
+        oid = self.repo.create_commit( self.ref_name
                                      , author
                                      , committer
                                      , msg
