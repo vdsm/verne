@@ -77,29 +77,37 @@ def main():
     sigpath = os.path.join(path, SIGFILE)
     for loc, commit in Commit(repo, repo.head.get_object()).recurse():
         if loc == ():
-            head_tree = commit.tree
+            head_tree = commit.tree.pick(path)
         elif loc == (0,):
-            oldsig = commit.tree.get_blob(sigpath, default=None)
+            last_tree = commit.tree.pick(path)
+            oldsig = last_tree.get_blob(sigpath, default=None)
             t = head_tree.insert(sigpath, oldsig)
             sig = pybitcointools.ecdsa_sign(t.hex, privkey)
             signed = sig == head_tree.get_blob(sigpath)
             break
 
-    log.info("%s %s signed", path, "is" if signed else "NOT")
-
-    # Extract the desired subtree from the user's working copy
-    tree = Tree(repo, repo.index.write_tree())
-    tree = tree[path].wrap(path)
+    if signed:
+        log.info("%s is already signed" % path)
+        return
 
     # Sign tree and commit
-    tree_signed = sign_tree(repo, privkey, path, tree)
+    tree = Tree(repo, repo.index.write_tree())
+    signed_tree = sign_tree(repo, privkey, path, tree)
     branch = Branch(repo, repo.head.name)
-    commit = branch.commit("Sign " + path, tree_signed)
+    assert branch.exists, "cannot sign empty branch"
+    import pdb; pdb.set_trace()
+    commit = branch.commit("Sign " + path, signed_tree)
     log.info("Wrote to %s, commit id %s" % (branch.name, commit.oid.hex))
 
 
 def sign_tree(repo, privkey, subpath, tree):
-    signature = pybitcointools.ecdsa_sign(tree.oid.hex, privkey)
+    # The hash that we're going to sign is the path to the
+    # given folder from the root of the repository.
+    # The idea is that a .sig will be validated relative to the root.
+    # Perhaps there could also be a .relsig file if the signatory 
+    # wants to allow deployment of the folder to different locations.
+    root_hash = tree.pick(subpath).oid.hex
+    signature = pybitcointools.ecdsa_sign(root_hash, privkey)
     return tree.insert(subpath + '/' + SIGFILE, signature)
 
 
