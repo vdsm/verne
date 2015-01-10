@@ -119,6 +119,8 @@ class Tree(object):
 
 class Branch(object):
     def __init__(self, repo, branch_name):
+        if not branch_name.startswith('refs/heads/'):
+            branch_name = 'refs/heads/' + branch_name
         self.ref_name = branch_name
         self.repo = repo
     
