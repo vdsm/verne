@@ -121,6 +121,14 @@ class Tree(object):
         return self._tree.oid == other._tree.oid
 
 
+class NotATree(TypeError):
+    pass
+
+
+class NotABlob(TypeError):
+    pass
+
+
 class Branch(object):
     def __init__(self, repo, name):
         if name.startswith('refs/heads/'):

@@ -72,6 +72,9 @@ def main():
             log.error("Private key incorrect")
             continue
 
+    # Check if already signed
+    # This section assumes that a signature mismatch indicates
+    # the presence of new changes, not any other kind of problem.
     signed = False
     sigpath = os.path.join(path, SIGFILE)
     for loc, commit in Commit(repo, repo.head.get_object()).recurse():
