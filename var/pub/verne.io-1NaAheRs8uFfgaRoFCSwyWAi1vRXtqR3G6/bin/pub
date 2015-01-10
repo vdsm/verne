@@ -91,11 +91,6 @@ def main():
     tree = Tree(repo, repo.index.write_tree())
     tree = tree[path].wrap(path)
 
-    # Make sure that the branch has actually changed
-    if branch.exists and branch.head.tree == tree:
-        log.info("Branch is up to date")
-        return
-
     # Sign tree and commit
     tree_signed = sign_tree(repo, privkey, path, tree)
     commit = branch.commit("Sign " + path, tree_signed)
@@ -106,39 +101,6 @@ def main():
 def sign_tree(repo, privkey, subpath, tree):
     signature = pybitcointools.ecdsa_sign(tree.oid.hex, privkey)
     return tree.insert(subpath + '/' + SIGFILE, signature)
-
-
-def check_signed_branch(repo, sig_path, privkey, branch):
-    if not branch.exists:
-        return
-    iter_revs = revisions(branch.head, sig_path)
-    revs = list(itertools.islice(iter_revs, 2))
-    if len(revs) == 0:
-        raise NotSigned("Unsigned modifications found in %s" % branch.name)
-    subpath = os.path.dirname(sig_path)
-    tree = branch.head.tree.delete(sig_path)
-    # To validate, we need to sign the tree with the previous signature.
-    if len(revs) == 2:
-        tree = tree.insert(sig_path, revs[1])
-    signed_tree = tree[subpath].wrap(subpath)
-    signature = pybitcointools.ecdsa_sign(signed_tree.hex, privkey)
-    if signature != revs[0]:
-        raise NotSigned("Bad signature. Expecting %s, got %s" %
-            (revs[0], signature))
-
-
-
-def revisions(commit, path, last=None):
-    try:
-        entry = commit.tree[path]
-    except KeyError:
-        return
-    if entry != last:
-        yield entry
-        last = entry
-    for parent in commit.parents:
-        for rev in revisions(parent, path, last):
-            yield rev
 
 
 class NotSigned(ValueError):
