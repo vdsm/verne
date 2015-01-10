@@ -93,10 +93,9 @@ def main():
 
     # Sign tree and commit
     tree_signed = sign_tree(repo, privkey, path, tree)
-    import pdb; pdb.set_trace()
+    branch = Branch(repo, repo.head.name)
     commit = branch.commit("Sign " + path, tree_signed)
-    log.info("Wrote to branch %s, commit id %s" % (branch_name, commit.oid.hex))
-    # repo.index.merge(commit.id)
+    log.info("Wrote to %s, commit id %s" % (branch.ref_name, commit.oid.hex))
 
 
 def sign_tree(repo, privkey, subpath, tree):

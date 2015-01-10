@@ -118,11 +118,10 @@ class Tree(object):
 
 
 class Branch(object):
-    def __init__(self, repo, branch_name):
-        if branch_name.startswith('refs/heads/'):
-            self.ref_name = branch_name[11:]
-        else:
-            self.ref_name = branch_name
+    def __init__(self, repo, ref_name):
+        if not ref_name.startswith('refs/heads/'):
+            raise ValueError("ref_name must start with refs/heads/")
+        self.ref_name = ref_name
         self.repo = repo
     
     @property
