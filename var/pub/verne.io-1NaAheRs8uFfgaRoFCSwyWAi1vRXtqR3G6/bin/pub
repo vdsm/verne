@@ -23,7 +23,7 @@ from verne.tree import Branch, Commit, Tree
 log = logging.root
 
 
-SIG_FILE = '.sig'
+SIGFILE = '.sig'
 ERR_INVALID_FOLDER = ("Cannot publish %s. "
                       "Path must point to a folder with name {name}-{pubhash}, "
                       "where {pubhash} is a valid Satoshi address (type 1) "
@@ -73,7 +73,7 @@ def main():
             continue
 
     # Validate
-    # sig_path = os.path.join(path, SIG_FILE)
+    sigpath = os.path.join(path, SIGFILE)
     # try:
     #     check_signed_branch(repo, sig_path, privkey, branch)
     # except NotSigned as e:
@@ -82,11 +82,23 @@ def main():
     #     else:
     #         raise
     
-    # Need to know if there are any unsigned changes.
-    # For now we will work on the principle that all
-    # data in our working branch is kosher, since we
-    # validate everything on merging.
+    # Check if the last change is a sigfile change.
+    # The only way to do this is to see if it validates.
+    changed = True
+    head_tree = None
+    for loc, commit in Commit(repo, repo.head.get_object()).recurse():
+        if loc == ():
+            head_tree = commit.tree
+        elif loc == (0,):
+            t = head_tree.insert(sigpath, commit.tree.get_blob(sigpath))
+            signature = pybitcointools.ecdsa_sign(t.hex, privkey)
+          
+            
+        
+
     import pdb; pdb.set_trace()
+    
+
 
     # Extract the desired subtree from the user's working copy
     tree = Tree(repo, repo.index.write_tree())
@@ -106,7 +118,7 @@ def main():
 
 def sign_tree(repo, privkey, subpath, tree):
     signature = pybitcointools.ecdsa_sign(tree.oid.hex, privkey)
-    return tree.set(subpath + '/' + SIG_FILE, signature)
+    return tree.insert(subpath + '/' + SIGFILE, signature)
 
 
 def check_signed_branch(repo, sig_path, privkey, branch):

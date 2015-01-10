@@ -50,7 +50,7 @@ class Tree(object):
         else:
             raise NotABlob(path)
             
-    def set(self, path, data):
+    def insert(self, path, data):
         parts = path.split('/')
         basename = parts.pop()
 
@@ -76,7 +76,7 @@ class Tree(object):
         return Tree(self.repo, tree)
 
     def delete(self, path):
-        return self.set(path, None)
+        return self.insert(path, None)
 
     def wrap(self, path):
         """ Bury the tree underneath a new top level path offset """
