@@ -85,7 +85,6 @@ def main():
                 log.info("No .sig file found")
                 break
         else:
-            print "hi2"
             last_tree = commit.tree.pick(path)
             if last_tree == head_tree:
                 continue
