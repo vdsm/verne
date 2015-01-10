@@ -35,8 +35,7 @@ class Tree(object):
                 return Tree(self.repo, tree)
             raise
         if entry.filemode == pygit2.GIT_FILEMODE_TREE:
-            import pdb; pdb.set_trace()
-            tree = self.repo.get(entry.id)
+            tree = self.repo.get(entry.oid)
             return Tree(self.repo, tree)
         else:
             raise NotASubtree(path)
