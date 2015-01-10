@@ -46,7 +46,7 @@ class Tree(object):
         except KeyError:
             return default
         if entry.filemode == pygit2.GIT_FILEMODE_BLOB:
-            return self.repo.get(entry.id).read_raw()
+            return self.repo.get(entry.oid).read_raw()
         else:
             raise NotABlob(path)
             
