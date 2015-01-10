@@ -1,3 +1,4 @@
 pybitcointools==1.1.15
 pelican==3.5.0
 Markdown==2.5.2
+uWSGI==2.0.9
