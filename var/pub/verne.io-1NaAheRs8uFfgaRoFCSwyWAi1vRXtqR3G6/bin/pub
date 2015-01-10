@@ -85,7 +85,7 @@ def main():
             signed = sig == head_tree.get_blob(sigpath)
             break
 
-    log.info("%s found to be %s", path, "signed" if signed else "UNsigned")
+    log.info("%s %s signed", path, "is" if signed else "NOT")
 
     # Extract the desired subtree from the user's working copy
     tree = Tree(repo, repo.index.write_tree())
