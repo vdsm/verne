@@ -72,33 +72,19 @@ def main():
             log.error("Private key incorrect")
             continue
 
-    # Validate
-    sigpath = os.path.join(path, SIGFILE)
-    # try:
-    #     check_signed_branch(repo, sig_path, privkey, branch)
-    # except NotSigned as e:
-    #     if args.force:
-    #         print "Overriding unsigned branch due to --force"
-    #     else:
-    #         raise
-    
-    # Check if the last change is a sigfile change.
-    # The only way to do this is to see if it validates.
-    changed = True
+    signed = False
     head_tree = None
     for loc, commit in Commit(repo, repo.head.get_object()).recurse():
         if loc == ():
             head_tree = commit.tree
         elif loc == (0,):
-            t = head_tree.insert(sigpath, commit.tree.get_blob(sigpath))
-            signature = pybitcointools.ecdsa_sign(t.hex, privkey)
-          
-            
-        
+            oldsig = commit.tree.get_blob(sigpath, default=None)
+            t = head_tree.insert(sigpath, oldsig)
+            sig = pybitcointools.ecdsa_sign(t.hex, privkey)
+            signed = sig == head_tree.get_blob(sigpath)
+            break
 
-    import pdb; pdb.set_trace()
-    
-
+    log.info("%s found to be %s", path, "signed" if signed else "UNsigned")
 
     # Extract the desired subtree from the user's working copy
     tree = Tree(repo, repo.index.write_tree())
