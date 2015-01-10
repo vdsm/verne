@@ -18,7 +18,7 @@ import sys
 import pybitcointools
 import pygit2
 
-from verne.tree import Tree, Branch
+from verne.tree import Branch, Commit, Tree 
 
 log = logging.root
 
