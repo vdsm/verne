@@ -161,3 +161,10 @@ class Commit(object):
     @property
     def parents(self):
         return (Commit(self.repo, c) for c in self._commit.parents)
+
+    def recurse(self, trail=()):
+        """ Depth first walk of dependencies """
+        yield trail, self
+        for i, parent in enumerate(self.parents):
+            for commit in parent.recurse(trail + (i,)):
+                yield commit
