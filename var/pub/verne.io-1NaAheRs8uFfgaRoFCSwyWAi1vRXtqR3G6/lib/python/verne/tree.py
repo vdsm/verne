@@ -118,23 +118,23 @@ class Tree(object):
 
 
 class Branch(object):
-    def __init__(self, repo, ref_name):
-        if not ref_name.startswith('refs/heads/'):
-            raise ValueError("ref_name must start with refs/heads/")
-        self.ref_name = ref_name
+    def __init__(self, repo, name):
+        if name.startswith('refs/heads/'):
+            name = name[11:]
+        self.name = name
         self.repo = repo
     
     @property
     def exists(self):
-        return bool(self.repo.lookup_branch(self.ref_name))
+        return bool(self.repo.lookup_branch(self.name))
     
     @property
     def head(self):
-        ref = self.repo.lookup_branch(self.ref_name)
+        ref = self.repo.lookup_branch(self.name)
         return Commit(self.repo, ref.get_object())
 
     def commit(self, msg, tree):
-        ref_to_update = self.ref_name if self.exists else None
+        ref_to_update = self.name if self.exists else None
         parents = [self.head._commit.oid] if self.exists else []
         author = pygit2.Signature('Alice Author', 'alice@authors.tld')
         committer = pygit2.Signature('Cecil Committer', 'cecil@committers.tld')
@@ -147,7 +147,7 @@ class Branch(object):
                                      )
         commit = self.repo.get(oid)
         if not ref_to_update:
-            self.repo.create_branch(self.ref_name, commit)
+            self.repo.create_branch(self.name, commit)
         return commit
 
 

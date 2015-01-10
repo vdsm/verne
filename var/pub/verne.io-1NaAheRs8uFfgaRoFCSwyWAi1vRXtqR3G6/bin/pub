@@ -95,7 +95,7 @@ def main():
     tree_signed = sign_tree(repo, privkey, path, tree)
     branch = Branch(repo, repo.head.name)
     commit = branch.commit("Sign " + path, tree_signed)
-    log.info("Wrote to %s, commit id %s" % (branch.ref_name, commit.oid.hex))
+    log.info("Wrote to %s, commit id %s" % (branch.name, commit.oid.hex))
 
 
 def sign_tree(repo, privkey, subpath, tree):
