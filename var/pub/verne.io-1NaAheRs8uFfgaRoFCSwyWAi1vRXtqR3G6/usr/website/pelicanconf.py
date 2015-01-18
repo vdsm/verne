@@ -6,7 +6,7 @@ AUTHOR = u'Scott Sadler'
 SITENAME = u'Verne'
 SITEURL = ''
 
-PATH = '../data'
+PATH = '../content'
 
 TIMEZONE = 'Europe/Berlin'
 
@@ -20,6 +20,10 @@ CATEGORY_FEED_ATOM = None
 TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
+
+
+from verne.web.pelicantools import VerneMarkdownReader
+READERS = {'md': VerneMarkdownReader}
 
 # Blogroll
 # LINKS = (('Pelican', 'http://getpelican.com/'),)

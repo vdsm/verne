@@ -1,9 +1,30 @@
+import os.path
+
 import pygit2
 
 """
 High level API for GIT as a general purpose time series database.
 All objects immutable by design.
 """
+
+
+def discover():
+    """ Discover enclosing repository """
+    repodir = pygit2.discover_repository('.')
+    return Repository(repodir)
+
+
+class Repository(object):
+    def relpath(self, path):
+        """ Try to turn a path into a key relative to the repository """
+        prefix = os.path.commonprefix([path, self.path])
+        return path[len(prefix):]
+
+    @property
+    def head(self):
+        _repo = super(Repository, self)
+        return Commit(super, super.head.get_object())
+
 
 class Tree(object):
     def __init__(self, repo, pygit2_tree):
