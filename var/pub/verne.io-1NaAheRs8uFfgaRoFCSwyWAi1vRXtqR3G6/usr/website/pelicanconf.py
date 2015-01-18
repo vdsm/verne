@@ -21,6 +21,9 @@ TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
 
+# we're sorta breaking contract with the assets so disable caching to
+# minimise leakage
+LOAD_CONTENT_CACHE = False
 
 from verne.web.pelicantools import VerneMarkdownReader
 READERS = {'md': VerneMarkdownReader}

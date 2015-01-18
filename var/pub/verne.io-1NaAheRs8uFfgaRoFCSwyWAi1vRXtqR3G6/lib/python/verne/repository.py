@@ -15,15 +15,17 @@ def discover():
 
 
 class Repository(object):
+    def __init__(self, path):
+        self._repo = pygit2.Repository(path)
+
     def relpath(self, path):
         """ Try to turn a path into a key relative to the repository """
-        prefix = os.path.commonprefix([path, self.path])
+        prefix = os.path.commonprefix([path, self._repo.path])
         return path[len(prefix):]
 
     @property
     def head(self):
-        _repo = super(Repository, self)
-        return Commit(super, super.head.get_object())
+        return Commit(self._repo, self._repo.head.get_object())
 
 
 class Tree(object):
@@ -140,6 +142,13 @@ class Tree(object):
 
     def __eq__(self, other):
         return self._tree.oid == other._tree.oid
+
+    def as_dict(self):
+        d = {}
+        for key in self:
+            item = self[key]
+            d[key] = item.as_dict() if type(item) == Tree else item
+        return d
 
 
 class NotATree(TypeError):
