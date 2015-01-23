@@ -6,7 +6,7 @@ AUTHOR = u'Scott Sadler'
 SITENAME = u'Verne'
 SITEURL = ''
 
-PATH = '../content'
+PATH = 'content'
 
 TIMEZONE = 'Europe/Berlin'
 
