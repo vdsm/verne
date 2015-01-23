@@ -28,6 +28,8 @@ LOAD_CONTENT_CACHE = False
 from verne.web.pelicantools import VerneMarkdownReader
 READERS = {'md': VerneMarkdownReader}
 
+JINJA_EXTENSIONS = ('verne.web.comments.JinjaComments',)
+
 # Blogroll
 # LINKS = (('Pelican', 'http://getpelican.com/'),)
 
