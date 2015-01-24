@@ -52,7 +52,7 @@ class Tree(object):
         try:
             entry = self._tree[path]
         except KeyError:
-            if default == EMPTY_TREE:
+            if default == self.EMPTY_TREE:
                 exists = self.repo.TreeBuilder()
                 tree = self.repo.get(exists.write())
                 return Tree(self.repo, tree)
