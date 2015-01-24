@@ -3,7 +3,6 @@
 # TODO: https://www.python.org/dev/peps/pep-0302/.
 # TODO: Single symlink deref. If can't find the address in the path, then
 # perhaps it'll dereference to a path that has an address
-# TODO: Don't sign the same branch twice
 
 import argparse
 import collections
@@ -24,14 +23,7 @@ log = logging.root
 
 
 SIGFILE = '.sig'
-ERR_INVALID_FOLDER = ("Cannot publish %s. "
-                      "Path must point to a folder with name {name}-{pubhash}, "
-                      "where {pubhash} is a valid Satoshi address (type 1) "
-                      "which you have the private key for.")
 ERR_UNCOMMITTED = "Cannot publish %s. Folder has uncommitted changes."
-RE_FOLDER = re.compile('^.*-[1][a-km-zA-HJ-NP-Z0-9]{26,33}$')
-BRANCH_PREFIX = 'out/pub/'
-
 
 
 def main():
@@ -45,32 +37,18 @@ def main():
     repo = pygit2.Repository(repodir)
 
     # Get pubkey hash
-    name = args.path.rstrip().rstrip('/').rsplit('/', 1)[-1]
-    addr = name.rsplit('-', 1)[-1]
-    if not (os.path.isdir(args.path) and RE_FOLDER.match(name)):
-        raise ValueError(ERR_INVALID_FOLDER % name)
     log.info("Folder to publish: %s", path)
 
     # Make sure user has no uncommitted changes in the path
     for (p, st) in repo.status().items():
         if p.startswith(path):
             if st not in (pygit2.GIT_STATUS_IGNORED,):
-                print p
-                for k in dir(pygit2):
-                    if getattr(pygit2, k) == st:
-                        print k
                 raise ValueError(ERR_UNCOMMITTED % path)
 
     # Get PK
     privkey = os.environ.get('VERNE_PRIVKEY', '').strip()
-    if privkey:
-        if addr != pybitcointools.privkey_to_address(privkey):
-            raise ValueError("Private key incorrect; cannot continue")
     while not privkey:
-        privkey = raw_input("Please enter the private key for %s: " % addr)
-        if addr != pybitcointools.privkey_to_address(privkey):
-            log.error("Private key incorrect")
-            continue
+        privkey = raw_input("Please enter signing key").strip()
 
     # Check if already signed
     # This section assumes that a signature mismatch indicates
@@ -102,7 +80,8 @@ def main():
     signed_tree = sign_tree(repo, privkey, path, tree)
     branch = Branch(repo, repo.head.name)
     assert branch.exists, "cannot sign empty branch"
-    commit = branch.commit("Sign " + path, signed_tree)
+    msg = "%s signed %s" % (pybitcointools.privkey_to_address(privkey), path)
+    commit = branch.commit(msg, signed_tree)
     log.info("Wrote to %s, commit id %s" % (branch.name, commit.oid.hex))
     # Ugly ass workaround to update the repo with the change.
     open(sigpath, 'w').write(signed_tree[sigpath])
