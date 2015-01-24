@@ -28,7 +28,7 @@ LOAD_CONTENT_CACHE = False
 from verne.web.pelicantools import VerneMarkdownReader
 READERS = {'md': VerneMarkdownReader}
 
-JINJA_EXTENSIONS = ('verne.web.comments.JinjaComments',)
+JINJA_EXTENSIONS = ('verne.web.comment.JinjaComments',)
 
 # Blogroll
 # LINKS = (('Pelican', 'http://getpelican.com/'),)
@@ -45,4 +45,4 @@ DEFAULT_PAGINATION = False
 DISPLAY_CATEGORIES_ON_MENU = False
 
 AUTHOR_SAVE_AS = ''
-THEME = 'theme/verne'
+THEME = 'lib/theme/verne'
