@@ -1,5 +1,3 @@
-
-
 from pelican.readers import MarkdownReader
 
 from verne import repository
