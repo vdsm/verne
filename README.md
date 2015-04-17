@@ -23,3 +23,6 @@ It is a single user operating system which can incorporate data and code from ot
 `/bin` contains a set of software tools chosen by the user for their day to day activities.
 
 `/var` is the termination point for repositories which are shared across the network.
+
+
+Hello Tedit.
